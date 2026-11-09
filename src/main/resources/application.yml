@@ -1,0 +1,30 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: payment-service
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/payments_db
+    username: ${DB_USER:cinema}
+    password: ${DB_PASSWORD:cinema}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+
+stripe:
+  # false = "dev mode": no calls to Stripe, use POST /api/payments/dev/{bookingId}/succeed|fail instead
+  enabled: ${STRIPE_ENABLED:false}
+  secret-key: ${STRIPE_SECRET_KEY:sk_test_replace_me}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_replace_me}
+  success-url: ${STRIPE_SUCCESS_URL:http://localhost:5173/booking/success?bookingId={BOOKING_ID}}
+  cancel-url: ${STRIPE_CANCEL_URL:http://localhost:5173/booking/cancelled?bookingId={BOOKING_ID}}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
