@@ -4,23 +4,32 @@ import bioflix.payment.entity.Payment;
 import bioflix.payment.entity.PaymentStatus;
 
 import java.time.Instant;
+import java.util.UUID;
 
 /**
- * The client polls GET /api/payments/booking/{bookingId} right after creating a booking,
- * and redirects the browser to checkoutUrl (Stripe hosted checkout).
+ * The client calls GET /api/payments/booking/{bookingId} right after creating a booking and redirects the browser
+ * to checkoutUrl (Stripe hosted checkout). checkoutUrl is only set while the payment is PENDING and the link is
+ * still valid. Amounts are in øre.
  */
 public record PaymentResponse(
-        Long id,
-        Long bookingId,
-        long amountMinor,
+        UUID id,
+        UUID bookingId,
+        UUID userId,
+        int amount,
         String currency,
         PaymentStatus status,
         String checkoutUrl,
+        Instant checkoutExpiresAt,
+        String receiptNumber,
+        String receiptUrl,
         String failureReason,
-        Instant createdAt
+        Instant createdAt,
+        Instant completedAt
 ) {
-    public static PaymentResponse from(Payment p) {
-        return new PaymentResponse(p.getId(), p.getBookingId(), p.getAmountMinor(), p.getCurrency(),
-                p.getStatus(), p.getCheckoutUrl(), p.getFailureReason(), p.getCreatedAt());
+    public static PaymentResponse from(Payment p, Instant now) {
+        boolean open = p.getStatus() == PaymentStatus.PENDING && p.hasOpenCheckout(now);
+        return new PaymentResponse(p.getId(), p.getBookingId(), p.getUserId(), p.getAmount(), p.getCurrency(),
+                p.getStatus(), open ? p.getCheckoutUrl() : null, open ? p.getCheckoutExpiresAt() : null,
+                p.getReceiptNumber(), p.getReceiptUrl(), p.getFailureReason(), p.getCreatedAt(), p.getCompletedAt());
     }
 }

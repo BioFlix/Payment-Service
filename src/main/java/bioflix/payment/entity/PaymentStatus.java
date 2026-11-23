@@ -1,11 +1,11 @@
 package bioflix.payment.entity;
 
 /**
- * PENDING   – Stripe checkout created, waiting for the customer
- * COMPLETED – paid (checkout.session.completed webhook)
- * FAILED    – checkout expired / payment failed
- * CANCELLED – booking was cancelled before payment
- * REFUNDED  – booking cancelled after payment, money returned
+ * PENDING   – created from booking.created, waiting for the customer to pay in Stripe Checkout
+ * COMPLETED – paid (checkout.session.completed)
+ * FAILED    – the payment failed in Stripe
+ * CANCELLED – the booking was cancelled/expired before it was paid
+ * REFUNDED  – money returned (booking cancelled after payment, or paid after the booking was cancelled)
  */
 public enum PaymentStatus {
     PENDING,

@@ -6,22 +6,53 @@ spring:
     name: payment-service
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:5432/payments_db
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:payments_db}
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:postgres}
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate      # the schema is owned by Flyway (src/main/resources/db/migration)
     open-in-view: false
 
+  flyway:
+    enabled: true
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    publisher-confirm-type: simple
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 5
+          initial-interval: 2s
+          multiplier: 2
+          max-interval: 20s
+
 stripe:
-  # false = "dev mode": no calls to Stripe, use POST /api/payments/dev/{bookingId}/succeed|fail instead
-  enabled: ${STRIPE_ENABLED:false}
-  secret-key: ${STRIPE_SECRET_KEY:sk_test_replace_me}
-  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_replace_me}
+  # Real Stripe (test mode) is the default. STRIPE_ENABLED=false = dev mode without a Stripe account:
+  # no calls to Stripe, use POST /api/payments/dev/{bookingId}/succeed|fail instead.
+  enabled: ${STRIPE_ENABLED:true}
+  secret-key: ${STRIPE_SECRET_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
   success-url: ${STRIPE_SUCCESS_URL:http://localhost:5173/booking/success?bookingId={BOOKING_ID}}
   cancel-url: ${STRIPE_CANCEL_URL:http://localhost:5173/booking/cancelled?bookingId={BOOKING_ID}}
+  # How long a Checkout link is valid. Stripe requires at least 30 minutes.
+  checkout-valid-for: ${STRIPE_CHECKOUT_VALID_FOR:30m}
+
+app:
+  rabbitmq:
+    exchange: cinema.events
+    dead-letter-exchange: payment-service.dlx
+  outbox:
+    poll-interval: 1s
+    batch-size: 50
+    keep-published-for: 7d
 
 management:
   endpoints:
