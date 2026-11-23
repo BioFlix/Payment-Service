@@ -76,3 +76,19 @@ Publicerer via outbox (correlationId = bookingId):
 ## CI
 `.github/workflows/ci.yml` kører testene og pusher `<DOCKERHUB_USERNAME>/payment-service:latest` til Docker Hub
 på `main`. Kræver repo-secrets `DOCKERHUB_USERNAME` og `DOCKERHUB_TOKEN`. Stripe-nøglerne skal **ikke** i CI.
+
+## Kubernetes (Docker Desktop)
+`kubernetes/payment-service` (Deployment + Service) og `kubernetes/payment-postgres` (Postgres 17 med en
+PersistentVolumeClaim på 1 Gi). Imaget hentes fra Docker Hub (`tmil24/payment-service:latest`).
+Forventer, at `rabbitmq` (Infrastructure-repoet) allerede kører i klusteret.
+
+Stripe-nøglerne lægges i en Secret, der oprettes i hånden (aldrig i Git):
+```
+kubectl create secret generic stripe-keys \
+  --from-literal=STRIPE_SECRET_KEY=sk_test_... \
+  --from-literal=STRIPE_WEBHOOK_SECRET=whsec_...
+kubectl apply -R -f kubernetes
+stripe listen --forward-to localhost:30084/api/payments/webhook/stripe
+```
+Servicen er en **NodePort på 30084**, så Stripe CLI på din egen maskine kan levere webhooks. Når gateway'en
+videresender `/api/payments/webhook/**`, kan den laves om til ClusterIP.

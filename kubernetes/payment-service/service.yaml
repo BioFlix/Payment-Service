@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  labels:
+    app: bioflix
+    service: payment-service
+spec:
+  # NodePort so the Stripe CLI on your own machine can deliver webhooks:
+  #   stripe listen --forward-to localhost:30084/api/payments/webhook/stripe
+  # Inside the cluster the gateway still uses http://payment-service:8084.
+  # When the gateway forwards /api/payments/webhook/** this can become ClusterIP.
+  type: NodePort
+  selector:
+    service: payment-service
+  ports:
+    - name: http
+      port: 8084
+      targetPort: 8084
+      nodePort: 30084

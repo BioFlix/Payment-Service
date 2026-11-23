@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  labels:
+    app: bioflix
+    service: payment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: payment-service
+  template:
+    metadata:
+      labels:
+        app: bioflix
+        service: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          # Docker Hub image pushed by .github/workflows/ci.yml (same Docker Hub account as catalog-service)
+          image: tmil24/payment-service:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8084
+          env:
+            - name: DB_HOST
+              value: payment-postgres
+            - name: DB_NAME
+              value: payments_db
+            - name: DB_USER
+              value: postgres
+            - name: DB_PASSWORD
+              value: postgres
+            # The shared broker from the Infrastructure repo (Service name "rabbitmq")
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            # Stripe test keys come from a Secret that is created by hand and never committed:
+            #   kubectl create secret generic stripe-keys \
+            #     --from-literal=STRIPE_SECRET_KEY=sk_test_... \
+            #     --from-literal=STRIPE_WEBHOOK_SECRET=whsec_...
+            - name: STRIPE_ENABLED
+              value: "true"
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-keys
+                  key: STRIPE_SECRET_KEY
+            - name: STRIPE_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-keys
+                  key: STRIPE_WEBHOOK_SECRET
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8084
+            initialDelaySeconds: 45
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 768Mi
