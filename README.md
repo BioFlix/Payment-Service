@@ -79,7 +79,7 @@ på `main`. Kræver repo-secrets `DOCKERHUB_USERNAME` og `DOCKERHUB_TOKEN`. Stri
 
 ## Kubernetes (Docker Desktop)
 `kubernetes/payment-service` (Deployment + Service) og `kubernetes/payment-postgres` (Postgres 17 med en
-PersistentVolumeClaim på 1 Gi). Imaget hentes fra Docker Hub (`tmil24/payment-service:latest`).
+PersistentVolumeClaim på 1 Gi). Imaget hentes fra Docker Hub (`umairtafail/payment-service:latest`).
 Forventer, at `rabbitmq` (Infrastructure-repoet) allerede kører i klusteret.
 
 Stripe-nøglerne lægges i en Secret, der oprettes i hånden (aldrig i Git):

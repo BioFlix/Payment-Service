@@ -18,8 +18,8 @@ spec:
     spec:
       containers:
         - name: payment-service
-          # Docker Hub image pushed by .github/workflows/ci.yml (same Docker Hub account as catalog-service)
-          image: tmil24/payment-service:latest
+          # Docker Hub image pushed by .github/workflows/ci.yml (your Docker Hub account – must match DOCKERHUB_USERNAME in CI)
+          image: umairtafail/payment-service:latest
           imagePullPolicy: Always
           ports:
             - name: http
