@@ -221,7 +221,8 @@ class PaymentFlowIntegrationTest {
         sendBookingCancelled(UUID.randomUUID(), bookingId, "USER", true);
         await().atMost(WAIT).until(() -> status(bookingId) == PaymentStatus.REFUNDED);
         sendBookingCancelled(UUID.randomUUID(), bookingId, "USER", true);   // a second cancel must not refund again
-        await().atMost(WAIT).until(() -> count("processed_events") == 2);
+        await().atMost(WAIT).until(() -> jdbc.queryForObject(
+                "select count(*) from processed_events where event_type = 'booking.cancelled'", Long.class) == 2);
 
         verify(stripe, times(1)).refund(any());
         assertThat(jdbc.queryForObject("select reason from refunds", String.class)).isEqualTo("BOOKING_CANCELLED");
